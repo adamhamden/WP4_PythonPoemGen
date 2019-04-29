@@ -2,6 +2,7 @@
 
 import sys
 import requests
+from bs4 import BeautifulSoup
 
 
 num_args = len(sys.argv)
@@ -11,7 +12,17 @@ if num_args > 2:
 
 keyword = sys.argv[1]
 
+times_url = "https://www.latimes.com"
+url = "https://www.latimes.com/search/?q=" + str(keyword) 
 
-page = requests.get("http://dataquestio.github.io/web-scraping-pages/simple.html")
+page = requests.get(url)
 
-print(page.content)
+soup = BeautifulSoup(page.content, 'html.parser')
+
+
+"""for a in soup.find_all('div', class_="h7"):
+    for b in a.find_all('a', href=True):
+    	print times_url + b['href']"""
+
+#finds url of top article relating to keyword
+print times_url + soup.find_all('div', class_="h7")[0].find_all('a', href=True)[0]['href']
