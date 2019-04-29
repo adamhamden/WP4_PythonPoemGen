@@ -1,3 +1,12 @@
 #!/usr/local/bin/python
 
-print ("Hello world")
+import sys
+
+num_args = len(sys.argv)
+if num_args > 2:
+	print("Please only enter 1 keyword")
+	exit()
+
+keyword = sys.argv[1]
+
+print(keyword)
