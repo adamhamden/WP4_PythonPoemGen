@@ -57,4 +57,3 @@ def extract_article_text():
 
 	return article
 
-print(extract_article_text())
