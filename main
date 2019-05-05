@@ -3,59 +3,110 @@
 import sys
 import requests
 from bs4 import BeautifulSoup
+import random
 
-def arg_parse():
-	num_args = len(sys.argv)
-	if num_args == 1:
-		return
+class keyword_parser:
 
-	keyword = ""
+	def arg_parse(self):
+		num_args = len(sys.argv)
+		if num_args == 1:
+			return
 
-	for i in range(1,num_args):
-		if(i == 1):
-			keyword = keyword + sys.argv[i]
-		else:
-			keyword = keyword + "+" + sys.argv[i]
+		keyword = ""
 
-	return keyword
+		for i in range(1,num_args):
+			if(i == 1):
+				keyword = keyword + sys.argv[i]
+			else:
+				keyword = keyword + "+" + sys.argv[i]
 
-def generate_url():
-	keyword = arg_parse()
-	times_url = "https://www.latimes.com"
-	story_filter = "&t=story"
-	url = "https://www.latimes.com/search/?q=" + str(keyword) + story_filter
-	return url
+		return keyword
 
-def extract_article_url():
-	url = generate_url()
-	times_url = "https://www.latimes.com"
-	page = requests.get(url)
-	soup = BeautifulSoup(page.content, 'html.parser')
+	def generate_url(self):
+		keyword = self.arg_parse()
+		times_url = "https://www.latimes.com"
+		story_filter = "&t=story"
+		url = "https://www.latimes.com/search/?q=" + str(keyword) + story_filter
+		return url
 
-	try:
-		top_url = soup.find('div', class_='h7').find('a', href=True)['href']
-	except:
-		print("Error: cannot find article related to the provided keyword")
-		exit()
+	def extract_article_url(self):
+		url = self.generate_url()
+		times_url = "https://www.latimes.com"
+		page = requests.get(url)
+		soup = BeautifulSoup(page.content, 'html.parser')
 
-	return times_url + top_url
+		try:
+			top_url = soup.find('div', class_='h7').find('a', href=True)['href']
+		except:
+			print("Error: cannot find article related to the provided keyword")
+			exit()
 
-def extract_article_text():
+		return times_url + top_url
 
-	page = requests.get(extract_article_url())
-	soup = BeautifulSoup(page.content, 'html.parser')
+	def extract_article_text(self):
 
-	try:
-		sentence_list = soup.find('div', class_= "paywall").find("article",class_="grid container padded-container").find('div', class_="wrapper clearfix full pb-feature pb-layout-item pb-f-article-body").find_all('p')
-	except:
-		print("Error: cannot find article related to the provided keyword")
-		exit()
+		page = requests.get(self.extract_article_url())
+		soup = BeautifulSoup(page.content, 'html.parser')
 
-	article = ""
-	for element in sentence_list:
-		article = article + " " + element.get_text()
+		try:
+			sentence_list = soup.find('div', class_= "paywall").find("article",class_="grid container padded-container").find('div', class_="wrapper clearfix full pb-feature pb-layout-item pb-f-article-body").find_all('p')
+		except:
+			print("Error: cannot find article related to the provided keyword")
+			exit()
 
-	return article
+		article = ""
+		for element in sentence_list:
+			article = article + " " + element.get_text()
 
-print(extract_article_text())
+		return article
+
+class markov_chain_parser:
+	def __init__(self, string):
+		self.string = string
+		"""self.list1 = self.string.split(".")
+		self.string = "".join(self.list1)
+		self.list1 = self.string.split(",")
+		self.string = "".join(self.list1)
+		self.list1 = self.string.split("\"")
+		self.string = "".join(self.list1)"""
+		self.list2 = self.string.split()
+		self.word_list = []
+
+		for word in self.list2:
+			self.word_list.append(word)
+
+	def print_list(self):
+		print(self.word_list)
+
+	def create_chain(self):
+		self.chain = {}
+		self.index = 0
+		for word in self.word_list[self.index:]: 
+			key = self.word_list[self.index - 1]
+			if key in self.chain:
+				self.chain[key].append(word)
+			else:
+				self.chain[key] = [word]
+			self.index += 1
+		
+	def gen_poem(self):
+		self.word = random.choice(list(self.chain.keys())) #random first word
+		self.message = self.word.capitalize()
+
+		while len(self.message.split(' ')) < 13:
+			self.word0 = random.choice(self.chain[self.word])
+			self.word = self.word0
+			self.message += ' ' + self.word
+
+		print(self.message)
+
+
+
+
+parser = keyword_parser()
+article_string = parser.extract_article_text()
+
+markov_chain = markov_chain_parser(article_string)
+markov_chain.create_chain()
+markov_chain.gen_poem()
 
