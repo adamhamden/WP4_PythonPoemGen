@@ -1,104 +1,190 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import sys
 import requests
 from bs4 import BeautifulSoup
 import random
+from PyQt5.QtWidgets import QApplication, QLabel
 
 class keyword_parser:
 
-	def arg_parse(self):
-		num_args = len(sys.argv)
-		if num_args == 1:
-			return
+    def arg_parse(self):
+        num_args = len(sys.argv)
+        if num_args == 1:
+            return
 
-		keyword = ""
+        keyword = ""
 
-		for i in range(1,num_args):
-			if(i == 1):
-				keyword = keyword + sys.argv[i]
-			else:
-				keyword = keyword + "+" + sys.argv[i]
+        for i in range(1,num_args):
+            if(i == 1):
+                keyword = keyword + sys.argv[i]
+            else:
+                keyword = keyword + "+" + sys.argv[i]
 
-		return keyword
+        return keyword
 
-	def generate_url(self):
-		keyword = self.arg_parse()
-		times_url = "https://www.latimes.com"
-		story_filter = "&t=story"
-		url = "https://www.latimes.com/search/?q=" + str(keyword) + story_filter
-		return url
+    def generate_url(self):
+        keyword = self.arg_parse()
+        times_url = "https://www.latimes.com"
+        story_filter = "&t=story"
+        url = "https://www.latimes.com/search/?q=" + str(keyword) + story_filter
+        return url
 
-	def extract_article_url(self):
-		url = self.generate_url()
-		times_url = "https://www.latimes.com"
-		page = requests.get(url)
-		soup = BeautifulSoup(page.content, 'html.parser')
+    def extract_article_url(self):
+        url = self.generate_url()
+        times_url = "https://www.latimes.com"
+        page = requests.get(url)
+        soup = BeautifulSoup(page.content, 'html.parser')
 
-		try:
-			top_url = soup.find('div', class_='h7').find('a', href=True)['href']
-		except:
-			print("Error: cannot find article related to the provided keyword")
-			exit()
+        try:
+            top_url = soup.find('div', class_='h7').find('a', href=True)['href']
+        except:
+            print("Error: cannot find article related to the provided keyword")
+            exit()
 
-		return times_url + top_url
+        return times_url + top_url
 
-	def extract_article_text(self):
+    def extract_article_text(self):
 
-		page = requests.get(self.extract_article_url())
-		soup = BeautifulSoup(page.content, 'html.parser')
+        page = requests.get(self.extract_article_url())
+        soup = BeautifulSoup(page.content, 'html.parser')
 
-		try:
-			sentence_list = soup.find('div', class_= "paywall").find("article",class_="grid container padded-container").find('div', class_="wrapper clearfix full pb-feature pb-layout-item pb-f-article-body").find_all('p')
-		except:
-			print("Error: cannot find article related to the provided keyword")
-			exit()
+        try:
+            sentence_list = soup.find('div', class_= "paywall").find("article",class_="grid container padded-container").find('div', class_="wrapper clearfix full pb-feature pb-layout-item pb-f-article-body").find_all('p')
+        except:
+            print("Error: cannot find article related to the provided keyword")
+            exit()
 
-		article = ""
-		for element in sentence_list:
-			article = article + " " + element.get_text()
+        article = ""
+        for element in sentence_list:
+            article = article + " " + element.get_text()
 
-		return article
+        return article
+
+def syllable_counter(word):
+    word = word.lower()
+    count = 0
+    vowels = "aeiouy"
+    if word[0] in vowels:
+        count += 1
+    for index in range(1, len(word)):
+        if word[index] in vowels and word[index - 1] not in vowels:
+            count += 1
+    if word.endswith("e"):
+        if word[len(word)-2] is not "e":
+            count -= 1
+    if count == 0:
+        count += 1
+    return count
 
 class markov_chain_parser:
-	def __init__(self, string):
-		self.string = string
-		"""self.list1 = self.string.split(".")
-		self.string = "".join(self.list1)
-		self.list1 = self.string.split(",")
-		self.string = "".join(self.list1)
-		self.list1 = self.string.split("\"")
-		self.string = "".join(self.list1)"""
-		self.list2 = self.string.split()
-		self.word_list = []
+    def __init__(self, string):
+        self.string = string
+        self.list1 = self.string.split(".")
+        self.string = "".join(self.list1)
+        self.list1 = self.string.split(",")
+        self.string = "".join(self.list1)
+        self.list1 = self.string.split('“')
+        self.string = "".join(self.list1)
+        self.list2 = self.string.split()
+        self.word_list = []
 
-		for word in self.list2:
-			self.word_list.append(word)
+        for word in self.list2:
+            self.word_list.append(word)
 
-	def print_list(self):
-		print(self.word_list)
+    def print_list(self):
+        print(self.word_list)
 
-	def create_chain(self):
-		self.chain = {}
-		self.index = 0
-		for word in self.word_list[self.index:]: 
-			key = self.word_list[self.index - 1]
-			if key in self.chain:
-				self.chain[key].append(word)
-			else:
-				self.chain[key] = [word]
-			self.index += 1
-		
-	def gen_poem(self):
-		self.word = random.choice(list(self.chain.keys())) #random first word
-		self.message = self.word.capitalize()
+    def create_chain(self):
+        self.chain = {}
+        self.index = 0
+        for word in self.word_list[self.index:]: 
+            key = self.word_list[self.index - 1]
+            if key in self.chain:
+                self.chain[key].append(word)
+            else:
+                self.chain[key] = [word]
+            self.index += 1
 
-		while len(self.message.split(' ')) < 13:
-			self.word0 = random.choice(self.chain[self.word])
-			self.word = self.word0
-			self.message += ' ' + self.word
+    def print_chain(self):
+        print(self.chain.items())
+        
+    def gen_poem(self):
 
-		print(self.message)
+        self.syll_count = 5
+        self.message = ''
+        self.word = random.choice(list(self.chain.keys())) #random first word
+        self.message = self.message + self.word
+        self.syll_count = self.syll_count - syllable_counter(self.word)
+
+        self.max_run = 0
+
+        while self.syll_count > 0:
+            self.next = random.choice(self.chain[self.word])
+            while syllable_counter(self.next) > self.syll_count:
+                self.next = random.choice(self.chain[self.word])
+                self.max_run += 1
+                if self.max_run > 4:
+                    self.max_run = 0
+                    self.next = random.choice(list(self.chain.keys()))
+                    break
+
+            self.word = self.next
+            self.syll_count = self.syll_count - syllable_counter(self.word)
+            self.message += ' ' + self.word
+
+        print(self.message)
+
+        self.syll_count = 7
+        self.message = ''
+        self.word = random.choice(list(self.chain.keys())) #random first word
+        self.message = self.message + self.word
+        self.syll_count = self.syll_count - syllable_counter(self.word)
+
+        self.max_run = 0
+
+        while self.syll_count > 0:
+            self.next = random.choice(self.chain[self.word])
+            while syllable_counter(self.next) > self.syll_count:
+                self.next = random.choice(self.chain[self.word])
+                self.max_run += 1
+                if self.max_run > 4:
+                    self.max_run = 0
+                    self.next = random.choice(list(self.chain.keys()))
+                    break
+
+            self.word = self.next
+            self.syll_count = self.syll_count - syllable_counter(self.word)
+            self.message += ' ' + self.word
+
+        print(self.message)
+
+        self.syll_count = 5
+        self.message = ''
+        self.word = random.choice(list(self.chain.keys())) #random first word
+        self.message = self.message + self.word
+        self.syll_count = self.syll_count - syllable_counter(self.word)
+
+        self.max_run = 0
+
+        while self.syll_count > 0:
+            self.next = random.choice(self.chain[self.word])
+            while syllable_counter(self.next) > self.syll_count:
+                self.next = random.choice(self.chain[self.word])
+                self.max_run += 1
+                if self.max_run > 4:
+                    self.max_run = 0
+                    self.next = random.choice(list(self.chain.keys()))
+                    break
+
+            self.word = self.next
+            self.syll_count = self.syll_count - syllable_counter(self.word)
+            self.message += ' ' + self.word
+
+        print(self.message)
+
+
+
 
 
 
@@ -109,4 +195,10 @@ article_string = parser.extract_article_text()
 markov_chain = markov_chain_parser(article_string)
 markov_chain.create_chain()
 markov_chain.gen_poem()
+
+app = QApplication([])
+label = QLabel('Hello World!')
+label.show()
+app.exec_()
+
 
