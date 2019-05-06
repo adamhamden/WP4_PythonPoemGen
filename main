@@ -5,10 +5,17 @@ import requests
 from bs4 import BeautifulSoup
 import random
 from PyQt5.QtWidgets import QApplication, QLabel
+from tkinter import *
+from PIL import ImageTk, Image
+
+
 
 class keyword_parser:
 
-    def arg_parse(self):
+    def __init__(self, keyword):
+        self.keyword = keyword.replace(" ", "+")
+    
+    """def arg_parse(self):
         num_args = len(sys.argv)
         if num_args == 1:
             return
@@ -21,10 +28,10 @@ class keyword_parser:
             else:
                 keyword = keyword + "+" + sys.argv[i]
 
-        return keyword
+        return keyword"""
 
     def generate_url(self):
-        keyword = self.arg_parse()
+        keyword = self.keyword
         times_url = "https://www.latimes.com"
         story_filter = "&t=story"
         url = "https://www.latimes.com/search/?q=" + str(keyword) + story_filter
@@ -133,10 +140,9 @@ class markov_chain_parser:
             self.syll_count = self.syll_count - syllable_counter(self.word)
             self.message += ' ' + self.word
 
-        print(self.message)
+        self.message = self.message + "\n"
 
         self.syll_count = 7
-        self.message = ''
         self.word = random.choice(list(self.chain.keys())) #random first word
         self.message = self.message + self.word
         self.syll_count = self.syll_count - syllable_counter(self.word)
@@ -157,10 +163,9 @@ class markov_chain_parser:
             self.syll_count = self.syll_count - syllable_counter(self.word)
             self.message += ' ' + self.word
 
-        print(self.message)
+        self.message = self.message + "\n"
 
         self.syll_count = 5
-        self.message = ''
         self.word = random.choice(list(self.chain.keys())) #random first word
         self.message = self.message + self.word
         self.syll_count = self.syll_count - syllable_counter(self.word)
@@ -181,24 +186,57 @@ class markov_chain_parser:
             self.syll_count = self.syll_count - syllable_counter(self.word)
             self.message += ' ' + self.word
 
+        self.message = self.message + "\n"
         print(self.message)
+        return self.message
 
-
-
-
-
-
-
-parser = keyword_parser()
+"""parser = keyword_parser()
 article_string = parser.extract_article_text()
 
 markov_chain = markov_chain_parser(article_string)
 markov_chain.create_chain()
-markov_chain.gen_poem()
+markov_chain.gen_poem()"""
 
-app = QApplication([])
-label = QLabel('Hello World!')
-label.show()
-app.exec_()
+window = Tk() 
+window.title("Markov Chain Haiku Generator")
+window.geometry('700x400')
+#window.configure(background='#42a1f4')
+lbl = Label(window, text="Please enter search keyword/s: ")
+lbl.grid(column=0, row=2)
 
+txt = Entry(window,width=10)
+txt.grid(column=1, row=2)
+
+path = "img.png"
+img = ImageTk.PhotoImage(Image.open(path))
+panel = Label(window, image = img)
+panel.grid(column=0, row=0, columnspan = 3)
+
+
+poem_text = ""
+lbl2 = Label(window, text="")
+lbl2.grid(column=0, row=3)
+
+def clicked():
+    lbl2.grid_remove()
+    keyword = txt.get()
+    parser = keyword_parser(keyword)
+    article_string = parser.extract_article_text()
+
+    markov_chain = markov_chain_parser(article_string)
+    markov_chain.create_chain()
+    poem_text = markov_chain.gen_poem()
+    lbl2.configure(text=poem_text, background='#4286f4')
+    lbl2.grid(column=0, row=3)
+
+
+btn = Button(window, text="Click Me", command=clicked)
+btn.grid(column=2, row=2)
+
+window.rowconfigure(1, minsize=50)
+
+
+
+
+window.mainloop()
 
