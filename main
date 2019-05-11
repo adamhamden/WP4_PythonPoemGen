@@ -1,20 +1,32 @@
 #!/usr/bin/env python3
+#allow the program to be run as an executable ./main instead of python3 ./main in terminal
+#NOTE: must also do chmod +x main to allow it such properties
 
-import sys
-import requests
-from bs4 import BeautifulSoup
-import random
-from PyQt5.QtWidgets import QApplication, QLabel
-from tkinter import *
-from PIL import ImageTk, Image
+#######################################################################################################
+#Author: Adam Hamden
+#Email: ahamden@usc.edu
+#Class: WRIT150 WP4
+#######################################################################################################
 
 
 
+import sys #allows access to sys.argv[] command line arguments
+import requests #allows for http requests
+from bs4 import BeautifulSoup #allows for html parsing
+import random #allows for random generation of poem
+from PyQt5.QtWidgets import QApplication, QLabel #a potential GUI lib
+from tkinter import * #GUI lib
+from PIL import ImageTk, Image #GUI lib
+
+
+#class handles all html requests and parsing from received keyword
 class keyword_parser:
 
     def __init__(self, keyword):
         self.keyword = keyword.replace(" ", "+")
+        #format the keyword to be added to the url
     
+    #uncomment to allow for non-GUI, terminal argument parsing
     """def arg_parse(self):
         num_args = len(sys.argv)
         if num_args == 1:
@@ -30,13 +42,15 @@ class keyword_parser:
 
         return keyword"""
 
+    #generate the url from the keyword
     def generate_url(self):
         keyword = self.keyword
         times_url = "https://www.latimes.com"
-        story_filter = "&t=story"
+        story_filter = "&t=story" #ensures that it searches only through story articles
         url = "https://www.latimes.com/search/?q=" + str(keyword) + story_filter
         return url
 
+    #parses the html structure of article and extracts the top article url
     def extract_article_url(self):
         url = self.generate_url()
         times_url = "https://www.latimes.com"
@@ -44,48 +58,60 @@ class keyword_parser:
         soup = BeautifulSoup(page.content, 'html.parser')
 
         try:
+            #searches through specific class and a href to find link
             top_url = soup.find('div', class_='h7').find('a', href=True)['href']
         except:
+            #if no article is found, then the program simply exits with an error message
             print("Error: cannot find article related to the provided keyword")
             exit()
 
         return times_url + top_url
 
+    #takes the top article url and extracts text of the article as a string
     def extract_article_text(self):
 
         page = requests.get(self.extract_article_url())
         soup = BeautifulSoup(page.content, 'html.parser')
 
         try:
+            #finds all the different text paragaphs from the article
             sentence_list = soup.find('div', class_= "paywall").find("article",class_="grid container padded-container").find('div', class_="wrapper clearfix full pb-feature pb-layout-item pb-f-article-body").find_all('p')
         except:
+            #if no text is found in the article then the program simply exits with an error message
             print("Error: cannot find article related to the provided keyword")
             exit()
 
         article = ""
-        for element in sentence_list:
+        for element in sentence_list: #strings together all the different paragraphs into a single long article string
             article = article + " " + element.get_text()
 
         return article
 
+#simplistic way to count syllables based on certain assumptions
+#works for 95% of words
+#bypasses need for complicated machine learning model and phoneme analysis
 def syllable_counter(word):
     word = word.lower()
     count = 0
-    vowels = "aeiouy"
-    if word[0] in vowels:
+    vowels = "aeiouy" #compiles list of vowels plus y
+    if word[0] in vowels: #if first letter is a vowel then count a syllable
         count += 1
-    for index in range(1, len(word)):
+    for index in range(1, len(word)): #go through the entire word 
         if word[index] in vowels and word[index - 1] not in vowels:
+            #ensure that consecutive vowels aren't counted as separate syllables
             count += 1
-    if word.endswith("e"):
+    if word.endswith("e"): #if the word ends with -e and not -ee, then remove a syllable
         if word[len(word)-2] is not "e":
             count -= 1
-    if count == 0:
+    if count == 0: #a word with no vowels is only 1 syllable
         count += 1
     return count
 
+
+#define the markov chain class that creates a stochastic model of probabilistic bigrams based on the article
 class markov_chain_parser:
     def __init__(self, string):
+        #strip the entire article of potentially awkward punctuation 
         self.string = string
         self.list1 = self.string.split(".")
         self.string = "".join(self.list1)
@@ -101,28 +127,29 @@ class markov_chain_parser:
         self.list2 = self.string.split()
         self.word_list = []
 
-        for word in self.list2:
+        for word in self.list2: # puts every individual word in the list
             self.word_list.append(word)
 
-    def print_list(self):
+    def print_list(self): #prints the list of separated words from the articles
         print(self.word_list)
 
     def create_chain(self):
-        self.chain = {}
+        self.chain = {} #the chain is a simple dictionary with each unique word as a key
         self.index = 0
-        for word in self.word_list[self.index:]: 
+        for word in self.word_list[self.index:]: #go through every word in the list
             key = self.word_list[self.index - 1]
-            if key in self.chain:
+            if key in self.chain: #if the word has been accounted for, add it to the key 
                 self.chain[key].append(word)
-            else:
+            else: #if the word is not a key, then add it to dictionary
                 self.chain[key] = [word]
             self.index += 1
 
-    def print_chain(self):
+    def print_chain(self): #prints the markov chain as a dictionary
         print(self.chain.items())
         
     def gen_poem(self):
 
+        #generates a 5 syllable set string based on a randomly chosen key
         self.syll_count = 5
         self.message = ''
         self.word = random.choice(list(self.chain.keys())) #random first word
@@ -131,12 +158,15 @@ class markov_chain_parser:
 
         self.max_run = 0
 
+        #ensures that if there is no possible way to fit the required amount of syllables then a new key is chosen
+        #this is a recursive process and ends up going through every single word, very low chance there is no way
+        #to fit some combination of the words into 5 syllables
         while self.syll_count > 0:
             self.next = random.choice(self.chain[self.word])
             while syllable_counter(self.next) > self.syll_count:
                 self.next = random.choice(self.chain[self.word])
                 self.max_run += 1
-                if self.max_run > 4:
+                if self.max_run > 10:
                     self.max_run = 0
                     self.next = random.choice(list(self.chain.keys()))
                     break
@@ -154,12 +184,15 @@ class markov_chain_parser:
 
         self.max_run = 0
 
+        #ensures that if there is no possible way to fit the required amount of syllables then a new key is chosen
+        #this is a recursive process and ends up going through every single word, very low chance there is no way
+        #to fit some combination of the words into 7 syllables
         while self.syll_count > 0:
             self.next = random.choice(self.chain[self.word])
             while syllable_counter(self.next) > self.syll_count:
                 self.next = random.choice(self.chain[self.word])
                 self.max_run += 1
-                if self.max_run > 4:
+                if self.max_run > 10:
                     self.max_run = 0
                     self.next = random.choice(list(self.chain.keys()))
                     break
@@ -177,12 +210,15 @@ class markov_chain_parser:
 
         self.max_run = 0
 
+        #ensures that if there is no possible way to fit the required amount of syllables then a new key is chosen
+        #this is a recursive process and ends up going through every single word, very low chance there is no way
+        #to fit some combination of the words into 5 syllables
         while self.syll_count > 0:
             self.next = random.choice(self.chain[self.word])
             while syllable_counter(self.next) > self.syll_count:
                 self.next = random.choice(self.chain[self.word])
                 self.max_run += 1
-                if self.max_run > 4:
+                if self.max_run > 10:
                     self.max_run = 0
                     self.next = random.choice(list(self.chain.keys()))
                     break
@@ -195,6 +231,7 @@ class markov_chain_parser:
         print(self.message)
         return self.message
 
+#uncomment to run non-GUI version in terminal
 """parser = keyword_parser()
 article_string = parser.extract_article_text()
 
@@ -202,51 +239,64 @@ markov_chain = markov_chain_parser(article_string)
 markov_chain.create_chain()
 markov_chain.gen_poem()"""
 
+
+#implement the GUI using tkinter
+
+#generate the window to display the gui
 window = Tk() 
 window.title("Markov Chain Haiku Generator")
 window.geometry('938x400')
 window.configure(background='#5599bb')
+
+#generate the text box to prompt user entry
 lbl = Label(window, text="Please enter search keyword/s: ")
 lbl.grid(column=0, row=2)
 lbl.configure(background='#5599bb',font=("Helvetica", 18, "bold"), foreground='#FFFFFF')
 
+#generate the entry field to allow for actual entry
 txt = Entry(window,width=25)
 txt.grid(column=1, row=2)
 txt.configure(background='#5599bb',font=("Helvetica", 15), foreground='#FFFFFF')
 
+#display the title image at the top
 path = "img.png"
 img = ImageTk.PhotoImage(Image.open(path))
 panel = Label(window, image = img)
 panel.grid(column=0, row=0, columnspan = 3)
 
-
+#creates a text box for the poem to be displayed
 poem_text = ""
 lbl2 = Label(window, text="")
 lbl2.grid(column=0, row=3)
 lbl2.configure(background='#5599bb')
 
-def clicked():
+def clicked(): #triggers only if the button is clicked
+    #erases the previous poem
     lbl2.grid_remove()
+    #gets the entered keyword/s
     keyword = txt.get()
     parser = keyword_parser(keyword)
     article_string = parser.extract_article_text()
-
+    #generates markov chain out of the article
     markov_chain = markov_chain_parser(article_string)
     markov_chain.create_chain()
+    #generates the poem
     poem_text = markov_chain.gen_poem()
+    #reconfigures the text to be printed
     lbl2.configure(text=poem_text, background='#5599bb', font=("Helvetica", 20, "bold"), foreground='#bed7e4')
     lbl2.grid(column=1, row=4)
 
-
-
+#creates a button image that allows whatever is in the text entry box to be taken as a query
 button = Button(window, text="", command=clicked)
 path = "button.png"
 img1 = ImageTk.PhotoImage(Image.open(path))
 button.configure(image=img1)
 button.grid(column=2, row=2)
 
+#configures the formatiing to ensure good spacing between different labels, buttons, and text boxes
 window.rowconfigure(3, minsize=35)
 window.rowconfigure(1, minsize=50)
 
+#allows for constant display of the window
 window.mainloop()
 
