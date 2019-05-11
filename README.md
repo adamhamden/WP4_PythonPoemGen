@@ -1,21 +1,14 @@
 ## WP4 Markovian Haiku Generator
 ***
 #### Final Product
-<img src="dem1.png"
-alt="Markdown Monster icon"
-style="float: left; margin-right: 10px;" />
-<img src="dem2.png"
-alt="Markdown Monster icon"
-style="float: left; margin-right: 10px;" />
-<img src="dem3.png"
-alt="Markdown Monster icon"
-style="float: left; margin-right: 10px;" />
-<img src="dem4.png"
-alt="Markdown Monster icon"
-style="float: left; margin-right: 10px;" />
-<img src="dem5.png"
-alt="Markdown Monster icon"
-style="float: left; margin-right: 10px;" />
+<img src="dem1.png" style="float: left; margin-right: 10px;" />
+###### Generated with keyword: clean water
+<img src="dem2.png" style="float: left; margin-right: 10px;" />
+###### Generated with keyword: economic china
+<img src="dem3.png" style="float: left; margin-right: 10px;" />
+###### Generated with keyword: trump
+<img src="dem4.png" style="float: left; margin-right: 10px;" />
+###### Generated with keyword: scandal
 ***
 #### HTML parsing
 ***
