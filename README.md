@@ -1,19 +1,5 @@
 ## WP4 Markovian Haiku Generator
 ***
-#### Final Product
-<img src="dem1.png"      alt="icon"
- style="float: left; margin-right: 10px;" />
-##### Generated with keyword: clean water
-<img src="dem2.png"      alt="icon"
- style="float: left; margin-right: 10px;" />
-##### Generated with keyword: economic china
-<img src="dem3.png"      alt="icon"
- style="float: left; margin-right: 10px;" />
-###### Generated with keyword: trump
-<img src="dem4.png"      alt="icon"
- style="float: left; margin-right: 10px;" />
-###### Generated with keyword: scandal
-***
 #### HTML parsing
 The html parsing was done using the requests library which extracts the complete html and associated scripts from a given url. The url was constructed using the keyword, a story filter, and the Los Angeles Times website. Once that was extracted, the BeautifulSoup library was used to extract relevent information embedded within the html code. 
 ***
@@ -31,3 +17,18 @@ The GUI was made using the tkinter library which interfaces well with python. Wh
 ***
 #### Key takeaways
 Overall, this project has allowed me to branch out and explore different libraries. I also created a virtual environment to encapsulate all the package requirements to allow for better portability. The code is well-commented where it is complex and the rest is intuitive (as seen in variable and function names). 
+***
+#### Final Product
+<img src="dem1.png"      alt="icon"
+style="float: left; margin-right: 10px;" />
+##### Generated with keyword: clean water
+<img src="dem2.png"      alt="icon"
+style="float: left; margin-right: 10px;" />
+##### Generated with keyword: economic china
+<img src="dem3.png"      alt="icon"
+style="float: left; margin-right: 10px;" />
+###### Generated with keyword: trump
+<img src="dem4.png"      alt="icon"
+style="float: left; margin-right: 10px;" />
+###### Generated with keyword: scandal
+***
